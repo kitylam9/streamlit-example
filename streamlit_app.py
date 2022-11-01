@@ -1,38 +1,60 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
+import cv2
+import numpy as np
 import streamlit as st
+st.title("backbone Robot skin analysis")
+def calculateBack(bytes_data): 
+    #Open a simple image
+    #img=cv2.imread("6_A_hgr2B_id05_1.jpg")
+    img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+    #converting from gbr to hsv color space
+    img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    #skin color range for hsv color space 
+    HSV_mask = cv2.inRange(img_HSV, (0, 15, 0), (17,170,255)) 
+    HSV_mask = cv2.morphologyEx(HSV_mask, cv2.MORPH_OPEN, np.ones((3,3), np.uint8))
 
-"""
-# Welcome to Streamlit!
+    #converting from gbr to YCbCr color space
+    img_YCrCb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
+    #skin color range for hsv color space 
+    YCrCb_mask = cv2.inRange(img_YCrCb, (0, 135, 85), (255,180,135)) 
+    YCrCb_mask = cv2.morphologyEx(YCrCb_mask, cv2.MORPH_OPEN, np.ones((3,3), np.uint8))
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
-
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
-
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    #merge skin detection (YCbCr and hsv)
+    global_mask=cv2.bitwise_and(YCrCb_mask,HSV_mask)
+    global_mask=cv2.medianBlur(global_mask,3)
+    global_mask = cv2.morphologyEx(global_mask, cv2.MORPH_OPEN, np.ones((4,4), np.uint8))
 
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
+    HSV_result = cv2.bitwise_not(HSV_mask)
+    YCrCb_result = cv2.bitwise_not(YCrCb_mask)
+    global_result=cv2.bitwise_not(global_mask)
+    #show results
+    # cv2.imshow("1_HSV.jpg",HSV_result)
+    # cv2.imshow("2_YCbCr.jpg",YCrCb_result)
+    # cv2.imshow("3_global_result.jpg",global_result)
+    # cv2.imshow("Image.jpg",img)
+    #cv2.imwrite("1_HSV.jpg",HSV_result)
+    #cv2.imwrite("2_YCbCr.jpg",YCrCb_result)
+    #cv2.imwrite("3_global_result.jpg",global_result)
 
-    Point = namedtuple('Point', 'x y')
-    data = []
+    st.image(global_result, caption='Back skin detected', channels="BGR" )
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()  
 
-    points_per_turn = total_points / num_turns
+img_file_buffer = st.camera_input("Take a picture")
+if img_file_buffer is not None:
+    # To read image file buffer with OpenCV:
+    bytes_data = img_file_buffer.getvalue()
+    calculateBack(bytes_data)
+    # Check the type of cv2_img:
+    # Should output: <class 'numpy.ndarray'>
+    #st.write(type(cv2_img))
 
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
+    # Check the shape of cv2_img:
+    # Should output shape: (height, width, channels)
+    #st.write(cv2_img.shape)
 
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+uploaded_file = st.file_uploader("Choose a file")
+if uploaded_file is not None:
+    # To read file as bytes:
+    bytes_data = uploaded_file.getvalue()
+    calculateBack(bytes_data)
