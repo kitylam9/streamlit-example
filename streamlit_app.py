@@ -1,10 +1,13 @@
 import cv2
 import numpy as np
+from PIL import Image
 import streamlit as st
 st.title("backbone Robot skin analysis")
 def calculateBack(bytes_data): 
     #Open a simple image
     #img=cv2.imread("6_A_hgr2B_id05_1.jpg")
+    original_image = Image.open(bytes_data)
+    img = np.array(original_image)
     img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
     #converting from gbr to hsv color space
     img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -36,25 +39,26 @@ def calculateBack(bytes_data):
     #cv2.imwrite("2_YCbCr.jpg",YCrCb_result)
     #cv2.imwrite("3_global_result.jpg",global_result)
 
-    st.image(global_result, caption='Back skin detected', channels="BGR" )
+    st.image([img, global_result]  )
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()  
 
-img_file_buffer = st.camera_input("Take a picture")
-if img_file_buffer is not None:
-    # To read image file buffer with OpenCV:
-    bytes_data = img_file_buffer.getvalue()
-    calculateBack(bytes_data)
-    # Check the type of cv2_img:
-    # Should output: <class 'numpy.ndarray'>
-    #st.write(type(cv2_img))
+if __name__ == '__main__':
+    img_file_buffer = st.camera_input("Take a picture")
+    if img_file_buffer is not None:
+        # To read image file buffer with OpenCV:
+        bytes_data = img_file_buffer.getvalue()
+        calculateBack(bytes_data)
+        # Check the type of cv2_img:
+        # Should output: <class 'numpy.ndarray'>
+        #st.write(type(cv2_img))
 
-    # Check the shape of cv2_img:
-    # Should output shape: (height, width, channels)
-    #st.write(cv2_img.shape)
+        # Check the shape of cv2_img:
+        # Should output shape: (height, width, channels)
+        #st.write(cv2_img.shape)
 
-uploaded_file = st.file_uploader("Choose a file")
-if uploaded_file is not None:
-    # To read file as bytes:
-    bytes_data = uploaded_file.getvalue()
-    calculateBack(bytes_data)
+    uploaded_file = st.file_uploader("Upload Your Image", type=['jpg', 'png', 'jpeg'])
+    if uploaded_file is not None:
+        # To read file as bytes:
+        bytes_data = uploaded_file.getvalue()
+        calculateBack(bytes_data)
