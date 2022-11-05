@@ -6,8 +6,8 @@ st.title("backbone Robot skin analysis")
 def calculateBack(bytes_data): 
     #Open a simple image
     #img=cv2.imread("6_A_hgr2B_id05_1.jpg")
-    original_image = Image.open(bytes_data)
-    img = np.array(original_image)
+    #original_image = Image.open(bytes_data)
+    #img = np.array(original_image)
     img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
     #converting from gbr to hsv color space
     img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -30,7 +30,7 @@ def calculateBack(bytes_data):
     HSV_result = cv2.bitwise_not(HSV_mask)
     YCrCb_result = cv2.bitwise_not(YCrCb_mask)
     global_result=cv2.bitwise_not(global_mask)
-
+    
     #show results
     # cv2.imshow("1_HSV.jpg",HSV_result)
     # cv2.imshow("2_YCbCr.jpg",YCrCb_result)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     if img_file_buffer is not None:
         # To read image file buffer with OpenCV:
         bytes_data = img_file_buffer.getvalue()
-        calculateBack(img_file_buffer)
+        calculateBack(bytes_data)
         # Check the type of cv2_img:
         # Should output: <class 'numpy.ndarray'>
         #st.write(type(cv2_img))
@@ -60,5 +60,6 @@ if __name__ == '__main__':
 
     uploaded_file = st.file_uploader("Upload Your Image", type=['jpg', 'png', 'jpeg'])
     if uploaded_file is not None:
-        # To read file as bytes: 
-        calculateBack(uploaded_file)
+        # To read file as bytes:
+        bytes_data = uploaded_file.getvalue()
+        calculateBack(bytes_data)
